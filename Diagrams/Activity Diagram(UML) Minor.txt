@@ -1,0 +1,17 @@
+Start
+  ↓
+Load Dataset
+  ↓
+Compute Profit, Loss, Margin
+  ↓
+Select Mode:
+  ├── Profit Oriented → Apply α weights
+  ├── Loss Oriented → Apply β weights
+  ├── Margin Oriented → Apply γ weights
+  └── Default → Apriori Algorithm
+  ↓
+Generate Association Rules
+  ↓
+Output Recommendations
+  ↓
+End

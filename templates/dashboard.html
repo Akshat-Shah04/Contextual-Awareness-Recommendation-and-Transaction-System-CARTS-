@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}CARTS · Dashboard{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<section class="kpis" id="kpis"></section>
+
+<div class="row side-wide">
+  <div class="card">
+    <div class="card-head">
+      <h2>CARTS vs Apriori: hold-out evaluation</h2>
+      <button class="btn small" id="eval-refresh">Re-run</button>
+    </div>
+    <p class="small muted" style="margin:0 0 8px">
+      80% of baskets train the rules. For each of up to 1,500 held-out baskets one item is hidden, and each strategy
+      recommends 5 items from the rest of the basket.
+    </p>
+    <div class="chart-box" style="height:220px"><canvas id="eval-chart"></canvas></div>
+    <div class="eval-grid" id="eval-cards"></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Scoring formula</h2></div>
+    <div class="formula">Score(i) = [ Σ<sub>r∈R(i)</sub> (w<sub>s</sub>s<sub>r</sub> + w<sub>c</sub>c<sub>r</sub> + w<sub>l</sub>ℓ<sub>r</sub> + w<sub>v</sub>v<sub>r</sub>) ] × (α<sub>p</sub>P<sub>n</sub> + α<sub>m</sub>M<sub>n</sub> + α<sub>f</sub>F<sub>n</sub> + α<sub>r</sub>R<sub>n</sub>)</div>
+    <ul class="small muted" style="padding-left:18px;margin:10px 0 0">
+      <li><b>R(i)</b>: rules A → i that fire for the cart</li>
+      <li><b>s, c, ℓ, v</b>: support, confidence, lift, conviction</li>
+      <li><b>P, M, F, R</b>: profit per unit, margin %, purchase frequency, revenue of item i</li>
+      <li>Each metric is Z-scored, then squashed to (0, 1) with a logistic function</li>
+      <li><b>Apriori baseline</b>: best firing rule's support × confidence</li>
+    </ul>
+    <p class="small muted" id="top20"></p>
+  </div>
+</div>
+
+<div class="row two">
+  <div class="card"><div class="card-head"><h2>Most frequently bought products</h2></div><div class="chart-box"><canvas id="top-items"></canvas></div></div>
+  <div class="card"><div class="card-head"><h2>Revenue &amp; estimated profit by category</h2></div><div class="chart-box"><canvas id="categories"></canvas></div></div>
+</div>
+
+<div class="row">
+  <div class="card">
+    <div class="card-head">
+      <h2>Association rules</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="search" id="rule-q" placeholder="Filter by product…" aria-label="Filter rules">
+        <div class="seg" id="rule-strategy" role="group" aria-label="Rank rules by">
+          <button data-s="carts" class="on">Rank by CARTS</button><button data-s="apriori">Rank by Apriori</button>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Rule</th><th class="r">Support</th><th class="r">Confidence</th><th class="r">Lift</th>
+          <th class="r">Rule strength</th><th class="r">Business factor</th><th class="r">Profit / unit</th>
+          <th class="r">CARTS score</th><th class="r">CARTS rank</th><th class="r">Apriori rank</th>
+        </tr></thead>
+        <tbody id="rules"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="row side-wide">
+  <div class="card">
+    <div class="card-head"><h2>Model settings</h2><span class="small muted" id="train-info"></span></div>
+    <div class="settings">
+      <div>
+        <h3 style="margin-bottom:8px">Apriori mining</h3>
+        <div class="field"><label>Min support <span id="v-min_support"></span></label><input type="range" id="min_support" min="0.003" max="0.05" step="0.001"></div>
+        <div class="field"><label>Min confidence <span id="v-min_confidence"></span></label><input type="range" id="min_confidence" min="0.05" max="0.9" step="0.05"></div>
+        <div class="field"><label>Max itemset size <span id="v-max_len"></span></label><input type="range" id="max_len" min="2" max="4" step="1"></div>
+        <div class="field"><label style="justify-content:flex-start;gap:8px"><input type="checkbox" id="include_orders"> Learn from shop checkouts too</label></div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:8px">Rule weights (w)</h3>
+        <div id="rule-weights"></div>
+        <h3 style="margin:12px 0 8px">Business weights (α)</h3>
+        <div id="item-weights"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" id="reset-settings">Defaults</button>
+      <button class="btn primary" id="retrain">Retrain model</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Dataset</h2></div>
+    <div id="dataset-info" class="small"></div>
+    <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+    <form class="upload" id="upload">
+      <h3>Use your own data</h3>
+      <label class="small muted">Transactions CSV: one basket per row, a wide table, or a long table such as Kaggle's
+        <code>Member_number, Date, itemDescription</code>
+        <input type="file" name="transactions" accept=".csv,.txt"></label>
+      <label class="small muted">Item master (optional, CSV/XLSX): item, cost price, selling price, category
+        <input type="file" name="item_master" accept=".csv,.xlsx,.xls"></label>
+      <label class="small muted">Currency symbol <input type="text" name="currency" maxlength="4" style="width:60px" placeholder="£"></label>
+      <div style="display:flex;gap:8px">
+        <button class="btn primary" type="submit">Upload &amp; retrain</button>
+        <button class="btn" type="button" id="reset-dataset">Restore default dataset</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row two">
+  <div class="card">
+    <div class="card-head"><h2>Shop orders</h2><button class="btn small danger" id="clear-orders">Clear orders</button></div>
+    <div id="order-summary" class="small" style="margin-bottom:10px"></div>
+    <div class="table-wrap" style="max-height:320px">
+      <table><thead><tr><th>#</th><th>Items</th><th>Strategy</th><th class="r">Total</th><th class="r">Recs bought</th></tr></thead>
+      <tbody id="orders"></tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Basket size distribution</h2></div>
+    <div class="chart-box" style="height:320px"><canvas id="basket-sizes"></canvas></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card">
+    <div class="card-head">
+      <h2>Item master</h2>
+      <input type="search" id="item-q" placeholder="Search products…" aria-label="Search item master">
+    </div>
+    <p class="small muted" style="margin:0 0 8px" id="item-note"></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Product</th><th>Category</th><th class="r">Cost price</th><th class="r">Selling price</th>
+          <th class="r">Profit / unit</th><th class="r">Margin</th><th class="r">Bought in</th><th class="r">Business factor</th><th></th></tr></thead>
+        <tbody id="items"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

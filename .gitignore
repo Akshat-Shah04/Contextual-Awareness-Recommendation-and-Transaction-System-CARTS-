@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# CARTS runtime data (orders DB, uploaded datasets, saved settings)
+instance/

@@ -1,0 +1,6 @@
+flask>=3.0
+pandas>=2.0
+numpy>=1.24
+mlxtend>=0.23
+openpyxl>=3.1   # reading .xlsx item masters / the raw Online Retail file
+pytest>=8.0     # tests only

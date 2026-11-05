@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}CARTS · Shop{% endblock %}
+{% block content %}
+<div class="shop">
+  <section>
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Search products…" aria-label="Search products">
+      <select id="sort" aria-label="Sort products">
+        <option value="popular">Most popular</option>
+        <option value="name">Name A–Z</option>
+        <option value="price">Price: low to high</option>
+        <option value="margin">Highest margin</option>
+      </select>
+    </div>
+    <div class="chips" id="categories"></div>
+    <div class="grid" id="products"></div>
+    <div class="load-more"><button class="btn" id="more" hidden>Show more</button></div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <div class="card-head">
+        <h2>Your cart</h2>
+        <button class="btn small" id="clear-cart">Clear</button>
+      </div>
+      <div id="cart"></div>
+      <div class="totals"><span>Total</span><span id="cart-total" class="num">–</span></div>
+      <button class="btn primary" id="checkout" style="width:100%;justify-content:center;margin-top:12px" disabled>Checkout</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Recommended for you</h2>
+        <div class="seg" id="strategy" role="group" aria-label="Recommendation strategy">
+          <button data-s="carts" class="on" title="Rule strength × business factor (profit, margin, frequency, revenue)">CARTS</button>
+          <button data-s="apriori" title="Frequency only: support × confidence of the best rule">Apriori</button>
+        </div>
+      </div>
+      <div id="recs"><div class="empty">Add something to your cart to get suggestions.</div></div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/shop.js') }}"></script>
+{% endblock %}

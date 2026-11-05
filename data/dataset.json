@@ -1,0 +1,20 @@
+{
+  "name": "Online Retail (UCI / Kaggle) - real invoices 2010-2011",
+  "currency": "\u00a3",
+  "source": "Chen, D. (2015). Online Retail. UCI Machine Learning Repository. https://doi.org/10.24432/C5BW33",
+  "kaggle": "https://www.kaggle.com/datasets/carrie1/ecommerce-data",
+  "license": "CC BY 4.0",
+  "notes": "Selling prices, quantities and baskets are real. Categories are derived from descriptions; cost prices are estimated from assumed category margins.",
+  "defaults": {
+    "min_support": 0.01,
+    "min_confidence": 0.2,
+    "min_lift": 1.0,
+    "max_len": 3
+  },
+  "stats": {
+    "raw_lines": 541909,
+    "invoices": 18559,
+    "products": 500,
+    "period": "2010-12-01 to 2011-12-09"
+  }
+}
